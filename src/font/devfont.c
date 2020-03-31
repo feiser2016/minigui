@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** defont.c: Device fonts management.
@@ -420,13 +420,13 @@ unsigned short font_GetBestScaleFactor (int height, int expect)
 }
 
 
-#ifdef _DEBUG
+#ifdef _DEBUG_DEVFONT
 
 #define PRINT_DEVFONTS(head, devfont, count) \
 { \
     devfont = head; \
     while (devfont) { \
-        _DBG_PRINTF ("  %d: %s, charsetname: %s, style: %08x\n",  \
+        _MG_PRINTF ("  %d: %s, charsetname: %s, style: %08x\n",  \
                 count,  \
                 devfont->name, devfont->charset_ops->name, devfont->style); \
             devfont = devfont->next; \
@@ -439,17 +439,15 @@ void dbg_dumpDevFonts (void)
     int         count = 0;
     DEVFONT*    devfont;
 
-    _DBG_PRINTF ("============= SBDevFonts ============\n");
+    _MG_PRINTF ("============= SBDevFonts ============\n");
     PRINT_DEVFONTS (sb_dev_font_head, devfont, count);
-    _DBG_PRINTF ("========== End of SBDevFonts =========\n");
+    _MG_PRINTF ("========== End of SBDevFonts =========\n");
 
-    _DBG_PRINTF ("\n============= MBDevFonts ============\n");
+    _MG_PRINTF ("\n============= MBDevFonts ============\n");
     PRINT_DEVFONTS (mb_dev_font_head, devfont, count);
-    _DBG_PRINTF ("========== End of MBDevFonts =========\n");
+    _MG_PRINTF ("========== End of MBDevFonts =========\n");
 }
-#endif
-
-
+#endif /* _DEBUG_DEVFONT */
 
 /***** Added in MiniGUI V2.2 for bitmap font *****/
 
@@ -550,24 +548,24 @@ static DEVFONT* make_devfont (const char* font_name, const void* data, BOOL is_f
     }
 
     if (fontops_info->type == NULL) {
-        _WRN_PRINTF ("invalid font type: %s", font_name);
+        _WRN_PRINTF ("invalid font type: %s\n", font_name);
         return NULL;
     }
 
     /*find the first charset*/
     if (!fontGetCharsetFromName (font_name, charset)) {
-        _WRN_PRINTF ("Invalid charset name: %s", font_name);
+        _WRN_PRINTF ("Invalid charset name: %s\n", font_name);
         return NULL;
     }
 
     if ((charset_ops = GetCharsetOpsEx (charset)) == NULL) {
-        _WRN_PRINTF ("Invalid charset name %s of font %s",
+        _WRN_PRINTF ("Invalid charset name %s of font %s\n",
                 charset, font_name);
         return NULL;
     }
 
     if (find_devfont(font_name, (charset_ops->bytes_maxlen_char > 1))) {
-        _WRN_PRINTF ("Duplicated devfont name (%s)",
+        _WRN_PRINTF ("Duplicated devfont name (%s)\n",
                 font_name);
         return NULL;
     }
@@ -583,7 +581,7 @@ static DEVFONT* make_devfont (const char* font_name, const void* data, BOOL is_f
                 font_name, data);
 
         if (devfont->data == NULL) {
-            _WRN_PRINTF ("error when loading font %s from %s file",
+            _WRN_PRINTF ("error when loading font %s from %s file\n",
                 font_name, (const char*) data);
             free (devfont);
             return NULL;
@@ -813,7 +811,7 @@ BOOL font_InitIncoreFonts (void)
 
     for (i = 0; i < NR_NULL_FONTS; i++) {
         if (!add_dev_font (_null_font_names[i], _null_font_names[i], FALSE)) {
-            _WRN_PRINTF ("can not init incore font: %s", _null_font_names[i]);
+            _WRN_PRINTF ("can not init incore font: %s\n", _null_font_names[i]);
             return FALSE;
         }
     }
@@ -821,7 +819,7 @@ BOOL font_InitIncoreFonts (void)
 #ifdef _MGFONT_RBF
     for (i = 0; i < NR_RBFONTS; i++) {
         if (!add_dev_font (incore_rbfonts [i]->name, incore_rbfonts [i]->data, FALSE)) {
-            _WRN_PRINTF ("can not init incore font: %s", incore_rbfonts [i]->name);
+            _WRN_PRINTF ("can not init incore font: %s\n", incore_rbfonts [i]->name);
             return FALSE;
         }
     }
@@ -830,7 +828,7 @@ BOOL font_InitIncoreFonts (void)
 #ifdef _MGFONT_VBF
     for (i = 0; i < NR_VBFONTS && incore_vbfonts[i]; i++) {
         if (!add_dev_font (incore_vbfonts [i]->name, incore_vbfonts [i], FALSE)) {
-            _WRN_PRINTF ("can not init incore font: %s", incore_vbfonts [i]->name);
+            _WRN_PRINTF ("can not init incore font: %s\n", incore_vbfonts [i]->name);
             return FALSE;
         }
     }
@@ -840,15 +838,15 @@ BOOL font_InitIncoreFonts (void)
     for (i = 0; i < NR_UPFONTS && incore_upfonts[i]; i++) {
         const char* name = ((UPFV1_FILE_HEADER*)(incore_upfonts [i]->root_dir))->font_name;
         if (!add_dev_font (name, incore_upfonts [i], FALSE)) {
-            _WRN_PRINTF ("can not init incore font: %s", name);
+            _WRN_PRINTF ("can not init incore font: %s\n", name);
             return FALSE;
         }
     }
 #endif
 
 #ifdef _MGFONT_SEF
-    if(!initialize_scripteasy()) {
-        _WRN_PRINTF ("Can not initialize ScriptEasy fonts!");
+    if(!font_InitializeScripteasy()) {
+        _WRN_PRINTF ("Can not initialize ScriptEasy fonts!\n");
         return FALSE;
     }
 #endif
@@ -880,8 +878,12 @@ BOOL font_TerminateIncoreFonts (void)
 #endif
 
 #ifdef _MGFONT_SEF
-    uninitialize_scripteasy();
+    font_UninitializeScripteasy();
 #endif
+
+    for (i = 0; i < NR_NULL_FONTS; i++) {
+        font_DelDevFont (_null_font_names[i]);
+    }
 
     return TRUE;
 }
@@ -1034,7 +1036,7 @@ static BOOL init_or_term_specifical_fonts (char* etc_section, BOOL is_unload)
 
     /*get font number in minigui etc*/
     if (GetMgEtcIntValue (etc_section, "font_number", &font_num) < 0 ) {
-        _WRN_PRINTF ("can't find font_number in section %s",
+        _WRN_PRINTF ("can't find font_number in section %s\n",
                 etc_section);
         return FALSE;
     }
@@ -1043,14 +1045,14 @@ static BOOL init_or_term_specifical_fonts (char* etc_section, BOOL is_unload)
     for (i=0; i<font_num; i++) {
         snprintf (key, sizeof(key)-1, "name%d", i);
         if (GetMgEtcValue (etc_section, key, font_name, LEN_UNIDEVFONT_NAME) < 0) {
-            _WRN_PRINTF ("can't get name of key %s in section %s",
+            _WRN_PRINTF ("can't get name of key %s in section %s\n",
                     key, etc_section);
             continue;
         }
 
         snprintf (key, sizeof(key)-1, "fontfile%d", i);
         if (GetMgEtcValue (etc_section, key, font_file_name, MAX_PATH) < 0) {
-            _WRN_PRINTF ("can't get font_file of key %s in section %s",
+            _WRN_PRINTF ("can't get font_file of key %s in section %s\n",
                     key, etc_section);
             continue;
         }
@@ -1072,7 +1074,7 @@ static BOOL init_or_term_specifical_fonts (char* etc_section, BOOL is_unload)
             if ((add_dev_font (font_name, font_file, TRUE)) == TRUE)
                 added_num++;
             else if ((0 == __mg_path_joint(font_path, MAX_PATH + 1,
-                        sysres_get_system_res_path(), font_file))
+                        __sysres_get_system_res_path(), font_file))
                     && ((add_dev_font (font_name, font_path, TRUE)) == TRUE))
                 added_num++;
         }
@@ -1098,6 +1100,8 @@ void font_TermSpecificalFonts (char* etc_section)
     init_or_term_specifical_fonts (etc_section, TRUE);
 }
 
+#if 0
+/* Since 5.0.0, we always initialize vector fonts for all runtime modes */
 #ifndef _MGRM_THREADS
 
 static int init_count = 0;
@@ -1136,6 +1140,6 @@ void GUIAPI TermVectorialFonts (void)
     font_TermFreetypeLibrary ();
 #endif
 }
+#endif /* not defined _MGRM_THREADS */
 
-#endif /* !_MGRM_THREADS */
-
+#endif  /* deprecated code */

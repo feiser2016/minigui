@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** linux-libinput.c: The implementation of the IAL engine based on libinput.
@@ -54,7 +54,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define _DEBUG
 #include "common.h"
 
 #ifdef _MGIAL_LIBINPUT
@@ -162,7 +161,7 @@ static int keyboard_update(void)
             (my_ctxt.last_keycode <= SCANCODE_F10) &&
             my_ctxt.kbd_state[my_ctxt.last_keycode])) {
 
-        if (mg_linux_tty_switch_vt(my_ctxt.last_keycode - SCANCODE_F1 + 1) == 0) {
+        if (__mg_linux_tty_switch_vt(my_ctxt.last_keycode - SCANCODE_F1 + 1) == 0) {
             my_ctxt.kbd_state[my_ctxt.last_keycode] = 0;
             my_ctxt.kbd_state[SCANCODE_LEFTCONTROL] = 0;
             my_ctxt.kbd_state[SCANCODE_LEFTALT] = 0;
@@ -602,7 +601,7 @@ static int wait_event_ex (int maxfd, fd_set *in, fd_set *out, fd_set *except,
         device = libinput_event_get_device(event);
         seat = libinput_device_get_seat(device);
         seat_name = libinput_seat_get_logical_name(seat);
-        _DBG_PRINTF("IAL>LIBINPUT: a new event device added: %s\n", seat_name);
+        _MG_PRINTF("IAL>LIBINPUT: a new event device added: %s\n", seat_name);
         break;
     }
 
@@ -614,7 +613,7 @@ static int wait_event_ex (int maxfd, fd_set *in, fd_set *out, fd_set *except,
         device = libinput_event_get_device(event);
         seat = libinput_device_get_seat(device);
         seat_name = libinput_seat_get_logical_name(seat);
-        _DBG_PRINTF("IAL>LIBINPUT: an event device removed: %s\n", seat_name);
+        _MG_PRINTF("IAL>LIBINPUT: an event device removed: %s\n", seat_name);
         break;
     }
 
@@ -1317,7 +1316,7 @@ static void update_default_device(void)
     }
 
     if (!default_seat_found) {
-        _WRN_PRINTF("no default seat found for seat_id: %s", my_ctxt.seat_id);
+        _WRN_PRINTF("no default seat found for seat_id: %s\n", my_ctxt.seat_id);
     }
 
     my_ctxt.li_fd = libinput_get_fd(my_ctxt.li);
@@ -1382,9 +1381,9 @@ static void set_leds (unsigned int leds)
     }
 }
 
-BOOL InitLibInput (INPUT* input, const char* mdev, const char* mtype)
+BOOL ial_InitLibInput (INPUT* input, const char* mdev, const char* mtype)
 {
-    if (mg_linux_tty_enable_vt_switch() == 0) {
+    if (__mg_linux_tty_enable_vt_switch() == 0) {
         _DBG_PRINTF("IAL>LIBINPUT: vt switch enabled\n");
         my_ctxt.vt_switch = 1;
     }
@@ -1401,7 +1400,7 @@ BOOL InitLibInput (INPUT* input, const char* mdev, const char* mtype)
     if (GetMgEtcValue ("libinput", "seat",
             my_ctxt.seat_id, LEN_SEAT_ID) < 0) {
         strcpy(my_ctxt.seat_id, "seat0");
-        _WRN_PRINTF("No libinput.seat defined, use the default 'seat0'");
+        _WRN_PRINTF("No libinput.seat defined, use the default 'seat0'\n");
     }
 
     if (libinput_udev_assign_seat(my_ctxt.li, my_ctxt.seat_id))
@@ -1450,7 +1449,7 @@ void TermLibInput (void)
     my_ctxt.li = NULL;
     my_ctxt.udev = NULL;
 
-    mg_linux_tty_disable_vt_switch();
+    __mg_linux_tty_disable_vt_switch();
 }
 
 #endif /* _MGIAL_LIBINPUT */

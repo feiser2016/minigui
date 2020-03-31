@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** charset-bidi.c: The charset Bidirectional Algorithm.
@@ -266,11 +266,11 @@ static void compact_neutrals (TYPERUN *list)
 }
 
 #define ADD_TYPE_LINK(p,q) \
-    do {	\
-        (p)->len  = (q)->pos - (p)->pos;	\
-        (p)->next = (q);	\
-        (q)->prev = (p);	\
-        (p) = (q);	        \
+    do {    \
+        (p)->len  = (q)->pos - (p)->pos;    \
+        (p)->next = (q);    \
+        (q)->prev = (p);    \
+        (p) = (q);            \
     } while (0)
 
 static TYPERUN* get_runtype_link (const CHARSETOPS* charset_ops, Achar32* achars, int len)

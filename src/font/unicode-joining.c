@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 
 /*
@@ -110,7 +110,7 @@ static void print_joining_types(const BidiLevel *embedding_levels,
      ? BIDI_SENTINEL \
      : embedding_levels[(i)])
 
-#define BIDI_LEVELS_MATCH(i, j)	\
+#define BIDI_LEVELS_MATCH(i, j)    \
     ((i) == (j) || (i) == BIDI_SENTINEL || (j) == BIDI_SENTINEL)
 
 void GUIAPI UBidiJoinArabic(const BidiType *bidi_types,

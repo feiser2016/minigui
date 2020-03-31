@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** dummy.c: The dummy IAL engine.
@@ -126,7 +126,7 @@ static int wait_event (int which, int maxfd, fd_set *in, fd_set *out, fd_set *ex
     return 0;
 }
 
-BOOL InitDummyInput (INPUT* input, const char* mdev, const char* mtype)
+BOOL ial_InitDummyInput (INPUT* input, const char* mdev, const char* mtype)
 {
     input->update_mouse = mouse_update;
     input->get_mouse_xy = mouse_getxy;

@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 
 /*
@@ -138,7 +138,7 @@ enum _BidiJoiningTypeEnum {
     BIDI_JOINING_TYPE_##TYPE = BIDI_JOINING_TYPE_##TYPE##_VAL,
 # include "unicode-joining-types-list.inc"
 # undef _UNIBIDI_ADD_TYPE
-    _UNIBIDI_JOINING_TYPE_JUNK	/* Don't use this */
+    _UNIBIDI_JOINING_TYPE_JUNK    /* Don't use this */
 };
 
 #ifdef __cplusplus

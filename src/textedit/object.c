@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** object.c: The implemenation of mObject class for the new textedit module.
@@ -107,7 +107,7 @@ mObjectClass Class(mObject) = {
     (PClassConstructor)mObjectClassConstructor
 };
 
-mObject * mg_newObject(mObjectClass *_class)
+mObject * mgNewObject(mObjectClass *_class)
 {
     mObject * obj;
 
@@ -123,7 +123,7 @@ mObject * mg_newObject(mObjectClass *_class)
 
 }
 
-mObject * mgNewObject(mObjectClass *_class,DWORD addData){
+mObject * mgNewObjectEx(mObjectClass *_class,DWORD addData){
     mObject * obj = newObject(_class);
     if(!obj)
         return NULL;

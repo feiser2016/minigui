@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** newtoolbar.c: the new-toolbar control module.
@@ -87,10 +87,15 @@ BOOL RegisterNewToolbarControl (void)
     WndClass.dwStyle     = WS_NONE;
     WndClass.dwExStyle   = WS_EX_NONE;
     WndClass.hCursor     = GetSystemCursor (IDC_ARROW);
-    WndClass.iBkColor    = GetWindowElementPixel (HWND_NULL, WE_BGC_WINDOW);
+#ifdef _MGSCHEMA_COMPOSITING
+    WndClass.dwBkColor   = GetWindowElementAttr (HWND_NULL, WE_BGC_WINDOW);
+#else
+    WndClass.iBkColor    =
+        GetWindowElementPixelEx (HWND_NULL, HDC_SCREEN, WE_BGC_WINDOW);
+#endif
     WndClass.WinProc     = NewToolbarCtrlProc;
 
-    return AddNewControlClass (&WndClass) == ERR_OK;
+    return gui_AddNewControlClass (&WndClass) == ERR_OK;
 }
 
 
@@ -372,7 +377,7 @@ static void draw_item_text_vert (HWND hwnd, HDC hdc, PNTBCTRLDATA ntb_data, NTBI
 
     SetBkMode (hdc, BM_TRANSPARENT);
     bk_pixel = SetBkColor (hdc, GetWindowBkColor (hwnd));
-    SetTextColor (hdc, GetWindowElementPixel (hwnd, WE_FGC_WINDOW));
+    SetTextColor (hdc, GetWindowElementPixelEx (hwnd, hdc, WE_FGC_WINDOW));
     DrawText (hdc, item->text, -1, &item->rc_text, format);
     SetBkColor (hdc, bk_pixel);
 }
@@ -698,7 +703,7 @@ static void draw_item_text_horz (HWND hwnd, HDC hdc, PNTBCTRLDATA ntb_data, NTBI
 
     SetBkMode (hdc, BM_TRANSPARENT);
     bk_pixel = SetBkColor (hdc, GetWindowBkColor (hwnd));
-    SetTextColor (hdc, GetWindowElementPixel (hwnd, WE_FGC_WINDOW));
+    SetTextColor (hdc, GetWindowElementPixelEx (hwnd, hdc, WE_FGC_WINDOW));
     DrawText (hdc, item->text, -1, &item->rc_text, format);
     SetBkColor (hdc, bk_pixel);
 }

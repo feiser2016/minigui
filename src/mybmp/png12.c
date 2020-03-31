@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** png12.c: Low-level PNG file read routines (based on LibPNG 1.2)
@@ -233,10 +233,10 @@ void* __mg_init_png(MG_RWops * fp, MYBITMAP * mybmp, RGB * pal)
         png_set_packing(*png_ptr);
 
     /* Expand grayscale images to the full 8 bits from 1, 2, or 4 bits/pixel */
-	if ((color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+    if ((color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
             && bit_depth < 8) {
         png_set_gray_1_2_4_to_8(*png_ptr);
-	}
+    }
 
     /* Expand paletted colors into true RGB triplets */
     if (color_type == PNG_COLOR_TYPE_PALETTE)

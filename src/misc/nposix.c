@@ -15,7 +15,7 @@
  *   and Graphics User Interface (GUI) support system for embedded systems
  *   and smart IoT devices.
  *
- *   Copyright (C) 2002~2018, Beijing FMSoft Technologies Co., Ltd.
+ *   Copyright (C) 2002~2020, Beijing FMSoft Technologies Co., Ltd.
  *   Copyright (C) 1998~2002, WEI Yongming
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** nposix.c: This file includes some miscelleous functions should be
@@ -62,6 +62,8 @@
 #ifdef HAVE_TIME
 #include <time.h>
 #endif
+
+#include "misc.h"
 
 #ifndef HAVE_STRDUP
 char* strdup (const char *string)
@@ -407,6 +409,11 @@ unsigned int __mg_os_get_random_seed (void)
     return 0;
 #elif defined (__UCOSII__)
     return 0;
+#elif defined (__RTTHREAD__)
+    // rt_tick_t rt_tick_get(void);
+    unsigned int rt_tick_get(void);
+    return rt_tick_get();
+#elif defined (__FREERTOS__)
 #else
     /*other os use time, for example: linux, OSE, etc.*/
     return time (NULL);
@@ -425,7 +432,7 @@ void __mg_os_time_delay (int ms)
     OSTimeDly (OS_TICKS_PER_SEC * ms / 1000);
 #elif defined (__VXWORKS__)
     taskDelay (sysClkRateGet() * ms / 1000);
-#elif defined (__PSOS__) || defined (__ECOS__)
+#elif defined (__PSOS__) || defined (__ECOS__) || defined (__RTEMS__)
     struct timespec ts;
     ts.tv_sec = 0;
     ts.tv_nsec = ms * 1000000;
@@ -439,6 +446,14 @@ void __mg_os_time_delay (int ms)
     NU_Sleep (ms/10);
 #elif defined (__OSE__)
     delay(ms);
+#elif defined (__RTTHREAD__)
+    // rt_err_t rt_thread_mdelay(rt_int32_t ms);
+    extern int rt_thread_mdelay(int ms);
+    rt_thread_mdelay(ms);
+#elif defined (__FREERTOS__)
+#error "Please implement __mg_os_time_delay for your OS"
+#else
+#error "Please implement __mg_os_time_delay for your OS"
 #endif
 }
 
@@ -448,24 +463,67 @@ void __mg_os_time_delay (int ms)
 
 #pragma comment(lib, "winmm.lib")
 
-void __mg_os_start_time_ms(void)
+/* XXX: win32 implementation is not tested */
+static DWORD startup_time_win32;
+void __mg_os_start_time (void)
 {
-    // do nothing
+    startup_time_win32 = timeGetTime();
 }
 
-DWORD __mg_os_get_time_ms(void) {
-    return timeGetTime();
+DWORD __mg_os_get_time_ms (void)
+{
+    DWORD current = timeGetTime();
+    if (current < startup_time_win32) {
+        // overflowed
+        return BITMASK_DWORD - startup_time_win32 + current;
+    }
+
+    return current - startup_time_win32;
 }
+
+DWORD __mg_os_get_time_ticks (void)
+{
+    DWORD current = timeGetTime();
+    if (current < startup_time_win32) {
+        // overflowed
+        DWORD ticks = (startup_time_win32 - current) / 10;
+        return BITMASK_DWORD/10 - ticks;
+    }
+
+    return (current - startup_time_win32) / 10;
+}
+
+#if 0   /* deprecated code */
+DWORD __mg_os_get_elapsed_ms (void)
+{
+    static DWORD last;
+    DWORD current = timeGetTime();
+    DWORD elapsed;
+
+    if (current >= last) {
+        elapsed = current - last;
+        return elapsed;
+    }
+    else {
+        /* overflowed */
+        elapsed = BITMASK_DWORD - last;
+        elapsed += current;
+    }
+
+    last = current;
+    return elapsed;
+}
+#endif  /* deprecated code */
 
 #elif defined (HAVE_CLOCK_GETTIME)
 
 static struct timespec timeval_startup;
-void __mg_os_start_time_ms(void)
+void __mg_os_start_time (void)
 {
-    clock_gettime(CLOCK_MONOTONIC, &timeval_startup);
+    clock_gettime (CLOCK_MONOTONIC, &timeval_startup);
 }
 
-DWORD __mg_os_get_time_ms(void)
+DWORD __mg_os_get_time_ms (void)
 {
     DWORD ds, dms;
     struct timespec current;
@@ -489,13 +547,63 @@ DWORD __mg_os_get_time_ms(void)
     return ds * 1000 + dms;
 }
 
-#if 0
+DWORD __mg_os_get_time_ticks (void)
+{
+    DWORD ds, dms;
+    struct timespec current;
+
+    clock_gettime(CLOCK_MONOTONIC, &current);
+    ds = (current.tv_sec - timeval_startup.tv_sec);
+
+    if (current.tv_sec == timeval_startup.tv_sec) {
+        dms = (current.tv_nsec - timeval_startup.tv_nsec) / 10000000L;
+    }
+    else if (current.tv_nsec >= timeval_startup.tv_nsec) {
+        dms = (current.tv_nsec - timeval_startup.tv_nsec) / 10000000L;
+    }
+    else {
+        assert(ds > 0);
+
+        ds--;
+        dms = 100L - (timeval_startup.tv_nsec - current.tv_nsec) / 10000000L;
+    }
+
+    return ds * 100 + dms;
+}
+
+#if 0   /* deprecated code */
+DWORD __mg_os_get_elapsed_ms (void)
+{
+    static struct timespec last;
+    DWORD ds, dms;
+    struct timespec current;
+
+    clock_gettime (CLOCK_MONOTONIC, &current);
+    ds = (current.tv_sec - last.tv_sec);
+
+    if (current.tv_sec == last.tv_sec) {
+        dms = (current.tv_nsec - last.tv_nsec) / 1000000L;
+    }
+    else if (current.tv_nsec >= last.tv_nsec) {
+        dms = (current.tv_nsec - last.tv_nsec) / 1000000L;
+    }
+    else {
+        assert (ds > 0);
+
+        ds--;
+        dms = 1000L - (last.tv_nsec - current.tv_nsec) / 1000000L;
+    }
+
+    last = current;
+    return ds * 1000 + dms;
+}
+
 #include <unistd.h>
 #include <poll.h>
 #include <sys/time.h>
 
 static struct timeval timeval_startup;
-void __mg_os_start_time_ms(void)
+void __mg_os_start_time(void)
 {
     gettimeofday(&timeval_startup, NULL);
 }
@@ -523,13 +631,13 @@ DWORD __mg_os_get_time_ms(void)
 
     return ds * 1000 + dms;
 }
-#endif
+#endif  /* deprecated code */
 
-#else
+#else   /* defined HAVE_CLOCK_GETTIME */
 
-#error "Please implement __mg_os_start_time_ms and __mg_os_get_time_ms for your OS"
+#error "Please implement __mg_os_start_time and __mg_os_get_time_ticks for your OS"
 
-#endif
+#endif  /* otherwise */
 
 time_t __mg_os_time (time_t * timer)
 {

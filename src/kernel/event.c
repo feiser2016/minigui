@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** event.c: Low level event handling module.
@@ -54,6 +54,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define _DEBUG
 
 #include "common.h"
 
@@ -87,9 +89,9 @@
 
 struct timeval __mg_event_timeout;
 
-static int timeoutusec;
-static int repeatusec;
-static int dblclicktime;
+static DWORD timeoutusec;
+static DWORD repeatusec;
+static DWORD dblclicktime;
 
 #ifndef _MGRM_THREADS
 static DWORD timeout_threshold;
@@ -126,7 +128,7 @@ static void GetTimeout (void)
         return;
     myrepeatusec = atoi(szValue);
 
-    if( GetMgEtcValue (EVENTPARA, EVENTPARA_TIMEOUTUSEC, szValue, 10) < 0 )
+    if (GetMgEtcValue (EVENTPARA, EVENTPARA_TIMEOUTUSEC, szValue, 10) < 0)
         return;
     mytimeoutusec = atoi(szValue);
 
@@ -252,19 +254,19 @@ static void treat_longpress (PKEYEVENT ke, DWORD interval)
                 ke->event = KE_KEYLONGPRESS;
             }
             else
-                ke->event = 0;
+                ke->event = KE_KEYDOWN;
         }
         else if (interval >= __mg_key_alwayspress_time) {
             if (flag2) {
                 flag2 = 0;
-                starttime = __mg_timer_counter;
+                starttime = __mg_tick_counter;
                 ke->event = KE_KEYALWAYSPRESS;
             }
-            else if (__mg_timer_counter - starttime < __mg_interval_time) {
-                ke->event = 0;
+            else if (__mg_tick_counter - starttime < __mg_interval_time) {
+                ke->event = KE_KEYDOWN;
             }
             else {
-                starttime = __mg_timer_counter;
+                starttime = __mg_tick_counter;
                 ke->event = KE_KEYALWAYSPRESS;
             }
         }
@@ -274,14 +276,14 @@ static void treat_longpress (PKEYEVENT ke, DWORD interval)
                         && interval <= __mg_key_longpress_time) {
             if (flag2) {
                 flag2 = 0;
-                starttime = __mg_timer_counter;
+                starttime = __mg_tick_counter;
                 ke->event = KE_KEYALWAYSPRESS;
             }
-            else if (__mg_timer_counter - starttime < __mg_interval_time) {
-                ke->event = 0;
+            else if (__mg_tick_counter - starttime < __mg_interval_time) {
+                ke->event = KE_KEYDOWN;
             }
             else {
-                starttime = __mg_timer_counter;
+                starttime = __mg_tick_counter;
                 ke->event = KE_KEYALWAYSPRESS;
             }
         }
@@ -291,7 +293,7 @@ static void treat_longpress (PKEYEVENT ke, DWORD interval)
                 ke->event = KE_KEYLONGPRESS;
             }
             else
-                ke->event = 0;
+                ke->event = KE_KEYDOWN;
         }
     }
 }
@@ -309,16 +311,16 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
     int make;       /* 0 = release, 1 = presse */
 
     if (event == 0) {
-        if (__mg_timer_counter >= timeout_count) {
+        if (__mg_tick_counter >= timeout_count) {
 
-            timeout_count = __mg_timer_counter + repeat_threshold;
+            timeout_count = __mg_tick_counter + repeat_threshold;
 
             // repeat last event
             if (old_lwe.type == LWETYPE_KEY
                     && old_lwe.data.ke.event == KE_KEYDOWN) {
 
                 memcpy (lwe, &old_lwe, sizeof (LWEVENT));
-                interval = __mg_timer_counter - ke_time;
+                interval = __mg_tick_counter - ke_time;
                 treat_longpress (ke, interval);
                 if (ke->event == KE_KEYDOWN) {
                     lwe->data.ke.status |= KS_REPEATED;
@@ -331,22 +333,22 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
                         old_lwe.data.me.event == ME_RIGHTDOWN ||
                         old_lwe.data.me.event == ME_MIDDLEDOWN))) {
                 // reset delay time
-                timeout_count = __mg_timer_counter + timeout_threshold;
+                timeout_count = __mg_tick_counter + timeout_threshold;
             }
 
             // reset delay time
             lwe->type = LWETYPE_TIMEOUT;
-            lwe->count = __mg_timer_counter;
+            lwe->count = __mg_tick_counter;
 
-            license_on_timeout();
+            __mg_license_on_timeout();
 
             return 1;
         }
         return 0;
     }
 
-    timeout_count = __mg_timer_counter + timeout_threshold;
-    // There was a event occurred.
+    timeout_count = __mg_tick_counter + timeout_threshold;
+    // There was an event occurred.
     if (event & IAL_MOUSEEVENT) {
         if (!IAL_UpdateMouse ())
             return 0;
@@ -365,14 +367,15 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
         if ( !(oldbutton & IAL_MOUSE_LEFTBUTTON) &&
               (button & IAL_MOUSE_LEFTBUTTON) )
         {
-            license_on_input();
+            __mg_license_on_input();
 
-            interval = __mg_timer_counter - time1;
+            interval = __mg_tick_counter - time1;
+
             if (interval <= dblclicktime)
                 me->event = ME_LEFTDBLCLICK;
             else
                 me->event = ME_LEFTDOWN;
-            time1 = __mg_timer_counter;
+            time1 = __mg_tick_counter;
 
             goto mouseret;
         }
@@ -380,7 +383,7 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
         if ( (oldbutton & IAL_MOUSE_LEFTBUTTON) &&
              !(button & IAL_MOUSE_LEFTBUTTON) )
         {
-            license_on_input();
+            __mg_license_on_input();
 
             me->event = ME_LEFTUP;
             goto mouseret;
@@ -389,12 +392,12 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
         if ( !(oldbutton & IAL_MOUSE_RIGHTBUTTON) &&
               (button & IAL_MOUSE_RIGHTBUTTON) )
         {
-            interval = __mg_timer_counter - time2;
+            interval = __mg_tick_counter - time2;
             if (interval <= dblclicktime)
                 me->event = ME_RIGHTDBLCLICK;
             else
                 me->event = ME_RIGHTDOWN;
-            time2 = __mg_timer_counter;
+            time2 = __mg_tick_counter;
 
             goto mouseret;
         }
@@ -409,12 +412,12 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
         if ( !(oldbutton & IAL_MOUSE_MIDDLEBUTTON) &&
               (button & IAL_MOUSE_MIDDLEBUTTON) )
         {
-            interval = __mg_timer_counter - time3;
+            interval = __mg_tick_counter - time3;
             if (interval <= dblclicktime)
                 me->event = ME_MIDDLEDBLCLICK;
             else
                 me->event = ME_MIDDLEDOWN;
-            time3 = __mg_timer_counter;
+            time3 = __mg_tick_counter;
 
             goto mouseret;
         }
@@ -433,7 +436,7 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
         if (nr_keys == 0)
             return 0;
 
-        license_on_input();
+        __mg_license_on_input();
 
         lwe->type = LWETYPE_KEY;
         keystate = IAL_GetKeyboardState ();
@@ -444,7 +447,7 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
             if (!oldkeystate[i] && keystate[i]) {
 #endif
                  ke->event = KE_KEYDOWN;
-                 ke_time =__mg_timer_counter;
+                 ke_time =__mg_tick_counter;
                  ke->scancode = i;
                  olddownkey = i;
                  break;
@@ -456,6 +459,7 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
 #endif
                  ke->event = KE_KEYUP;
                  ke->scancode = i;
+                 olddownkey = 0;
                  break;
             }
         }
@@ -463,10 +467,14 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
             if (olddownkey == 0)
                 return 0;
             ke->scancode = olddownkey;
-            interval = __mg_timer_counter - ke_time;
+            interval = __mg_tick_counter - ke_time;
             treat_longpress (ke, interval);
-            if (ke->event == 0)
+            if (ke->event == 0) {
                 return 0;
+            }
+            else if (ke->event == KE_KEYDOWN) {
+                status |= KS_REPEATED;
+            }
         }
 
         make = (ke->event == KE_KEYDOWN)?1:0;
@@ -557,8 +565,10 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
             // Mouse button status
             if (oldbutton & IAL_MOUSE_LEFTBUTTON)
                 status |= KS_LEFTBUTTON;
-            else if (oldbutton & IAL_MOUSE_RIGHTBUTTON)
+            if (oldbutton & IAL_MOUSE_RIGHTBUTTON)
                 status |= KS_RIGHTBUTTON;
+            if (oldbutton & IAL_MOUSE_MIDDLEBUTTON)
+                status |= KS_MIDDLEBUTTON;
         }
         ke->status = status;
 #ifdef _MGRM_PROCESSES
@@ -628,7 +638,7 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
                     && old_lwe.data.ke.event == KE_KEYDOWN) {
 
                 memcpy (lwe, &old_lwe, sizeof (LWEVENT));
-                interval = __mg_timer_counter - ke_time;
+                interval = __mg_tick_counter - ke_time;
                 treat_longpress (ke, interval);
                 if (ke->event == KE_KEYDOWN) {
                     lwe->data.ke.status |= KS_REPEATED;
@@ -648,7 +658,7 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
             lwe->type = LWETYPE_TIMEOUT;
             lwe->count = ++timeout_count;
 
-            license_on_timeout();
+            __mg_license_on_timeout();
 
             return 1;
         }
@@ -677,14 +687,14 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
         if ( !(oldbutton & IAL_MOUSE_LEFTBUTTON) &&
               (button & IAL_MOUSE_LEFTBUTTON) )
         {
-            license_on_input();
+            __mg_license_on_input();
 
-            interval = __mg_timer_counter - time1;
+            interval = __mg_tick_counter - time1;
             if (interval <= dblclicktime)
                 me->event = ME_LEFTDBLCLICK;
             else
                 me->event = ME_LEFTDOWN;
-            time1 = __mg_timer_counter;
+            time1 = __mg_tick_counter;
 
             goto mouseret;
         }
@@ -692,7 +702,7 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
         if ( (oldbutton & IAL_MOUSE_LEFTBUTTON) &&
              !(button & IAL_MOUSE_LEFTBUTTON) )
         {
-            license_on_input();
+            __mg_license_on_input();
 
             me->event = ME_LEFTUP;
             goto mouseret;
@@ -701,12 +711,12 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
         if ( !(oldbutton & IAL_MOUSE_RIGHTBUTTON) &&
               (button & IAL_MOUSE_RIGHTBUTTON) )
         {
-            interval = __mg_timer_counter - time2;
+            interval = __mg_tick_counter - time2;
             if (interval <= dblclicktime)
                 me->event = ME_RIGHTDBLCLICK;
             else
                 me->event = ME_RIGHTDOWN;
-            time2 = __mg_timer_counter;
+            time2 = __mg_tick_counter;
 
             goto mouseret;
         }
@@ -721,12 +731,12 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
         if ( !(oldbutton & IAL_MOUSE_MIDDLEBUTTON) &&
               (button & IAL_MOUSE_MIDDLEBUTTON) )
         {
-            interval = __mg_timer_counter - time3;
+            interval = __mg_tick_counter - time3;
             if (interval <= dblclicktime)
                 me->event = ME_MIDDLEDBLCLICK;
             else
                 me->event = ME_MIDDLEDOWN;
-            time3 = __mg_timer_counter;
+            time3 = __mg_tick_counter;
 
             goto mouseret;
         }
@@ -740,7 +750,7 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
     }
 
     if (event & IAL_KEYEVENT) {
-        license_on_input();
+        __mg_license_on_input();
 
         lwe->type = LWETYPE_KEY;
         keystate = IAL_GetKeyboardState ();
@@ -748,7 +758,7 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
         for (i = 1; i < nr_keys; i++) {
             if(!oldkeystate[i] && keystate[i]) {
                  ke->event = KE_KEYDOWN;
-                 ke_time =__mg_timer_counter;
+                 ke_time =__mg_tick_counter;
                  ke->scancode = i;
                  olddownkey = i;
                  break;
@@ -756,6 +766,7 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
             if(oldkeystate[i] && !keystate[i]) {
                  ke->event = KE_KEYUP;
                  ke->scancode = i;
+                 olddownkey = 0;
                  break;
             }
         }
@@ -763,10 +774,14 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
             if (olddownkey == 0)
                 return 0;
             ke->scancode = olddownkey;
-            interval = __mg_timer_counter - ke_time;
+            interval = __mg_tick_counter - ke_time;
             treat_longpress (ke, interval);
-            if (ke->event == 0)
+            if (ke->event == 0) {
                 return 0;
+            }
+            else if (ke->event == KE_KEYDOWN) {
+                status |= KS_REPEATED;
+            }
         }
 
         make = (ke->event == KE_KEYDOWN) ? 1 : 0;
@@ -856,8 +871,10 @@ BOOL kernel_GetLWEvent (int event, PLWEVENT lwe)
             // Mouse button status
             if (oldbutton & IAL_MOUSE_LEFTBUTTON)
                 status |= KS_LEFTBUTTON;
-            else if (oldbutton & IAL_MOUSE_RIGHTBUTTON)
+            if (oldbutton & IAL_MOUSE_RIGHTBUTTON)
                 status |= KS_RIGHTBUTTON;
+            if (oldbutton & IAL_MOUSE_MIDDLEBUTTON)
+                status |= KS_MIDDLEBUTTON;
         }
         ke->status = status;
         memcpy (oldkeystate, keystate, nr_keys);

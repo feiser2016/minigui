@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** linux-libinput.h: the head file of the IAL engine based on libinput.
@@ -56,7 +56,7 @@
 extern "C" {
 #endif  /* __cplusplus */
 
-BOOL InitLibInput (INPUT* input, const char* mdev, const char* mtype);
+BOOL ial_InitLibInput (INPUT* input, const char* mdev, const char* mtype);
 void TermLibInput (void);
 
 #ifdef __cplusplus

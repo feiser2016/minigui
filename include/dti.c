@@ -47,13 +47,13 @@
     under the terms and conditions of the commercial license.
 
     For more information about the commercial license, please refer to
-    <http://www.minigui.com/en/about/licensing-policy/>.
+    <http://www.minigui.com/blog/minigui-licensing-policy/>.
 
  \endverbatim
  */
 
 /*
- *      MiniGUI for Linux/uClinux, eCos, uC/OS-II, VxWorks, 
+ *      MiniGUI for Linux/uClinux, eCos, uC/OS-II, VxWorks,
  *      pSOS, ThreadX, NuCleus, OSE, and Win32.
  *
  */

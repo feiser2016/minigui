@@ -30,7 +30,7 @@
 ##   under the terms and conditions of the commercial license.
 ## 
 ##   For more information about the commercial license, please refer to
-##   <http://www.minigui.com/en/about/licensing-policy/>.
+##   <http://www.minigui.com/blog/minigui-licensing-policy/>.
 ##
 
 if [ $# -ne 1 ]; then
@@ -96,4 +96,4 @@ cd $DAT_DIR; find . -name \*.dat | sed "s/^\.\/*//g" | sort > ../res.lst; cd ..
 
 rm res.lst
 
-find $C_DIR -name \*.dat.c -exec sed 's/unsigned/MG_LOCAL unsigned/' -i {} \;
+find $C_DIR -name \*.dat.c -exec sed 's/MG_LOCAL MG_LOCAL/MG_LOCAL/' -i {} \;

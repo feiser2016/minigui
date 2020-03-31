@@ -8,7 +8,7 @@ noinst_LTLIBRARIES = libnewgal.la
 SUBDIRS = @VIDEO_SUBDIRS@
 DIST_SUBDIRS = dummy fbcon qvfb wvfb em85xxyuv em85xxosd svpxxosd bf533 utpmc \
                mb93493 commlcd shadow mlshadow dfb em86gfx hisi rtos_xvfb pcxvfb \
-               nexus s3c6410 sigma8654 mstar gdl stgfb usvfb dri
+               nexus s3c6410 sigma8654 mstar gdl stgfb usvfb drm
 # x11 dga vgl svga ggi aalib
 
 EXTRA_DIST=makefile.ng makefile.msvc
@@ -35,8 +35,14 @@ COMMON_SRCS =       \
     sysvideo.h      \
     video.c         \
     newgal.c        \
-    videomem-bucket.h \
-    videomem-bucket.c
+    videomem-bucket.h   \
+    videomem-bucket.c   \
+    surface-shared.c    \
+    surface-cursor.c    \
+    surface-shm.c       \
+    shadow-screen.h     \
+    shadow-screen.c     \
+    $(NULL_FILE)
 
 libnewgal_la_SOURCES = $(COMMON_SRCS)
 libnewgal_la_LIBADD = $(DRIVERS)

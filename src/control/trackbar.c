@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** trackbar.c: the TrackBar Control module.
@@ -76,7 +76,7 @@ static void TrackBarOnDraw (HWND hwnd, HDC hdc, TRACKBARDATA* pData, DWORD dwSty
 
     win_rdr = GetWindowInfo(hwnd)->we_rdr;
     if (!win_rdr) {
-        _WRN_PRINTF ("window renderer is NULL");
+        _ERR_PRINTF ("CONTROL>TRACKBAR: window renderer is NULL\n");
         return;
     }
 
@@ -105,7 +105,8 @@ static void TrackBarOnDraw (HWND hwnd, HDC hdc, TRACKBARDATA* pData, DWORD dwSty
 
         SetBkMode (hdc, BM_TRANSPARENT);
         SetBkColor (hdc, GetWindowBkColor (hwnd));
-        SetTextColor (hdc, GetWindowElementPixel (hwnd, WE_FGC_THREED_BODY));
+        SetTextColor (hdc,
+                GetWindowElementPixelEx (hwnd, hdc, WE_FGC_THREED_BODY));
 
         TextOut (hdc, x + 1, y + (h>>1) - (sliderh>>1) - GAP_TIP_SLIDER,
                             pData->sStartTip);
@@ -229,7 +230,6 @@ static LRESULT TrackBarCtrlProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     {
         case MSG_CREATE:
             if (!(pData = malloc (sizeof (TRACKBARDATA)))) {
-                _WRN_PRINTF ("Create control failure!");
                 return -1;
             }
             pData->nMax = 10;
@@ -543,9 +543,15 @@ BOOL RegisterTrackBarControl (void)
     WndClass.dwStyle     = WS_NONE;
     WndClass.dwExStyle   = WS_EX_NONE;
     WndClass.hCursor     = GetSystemCursor (0);
-    WndClass.iBkColor    = GetWindowElementPixel (HWND_DESKTOP, WE_MAINC_THREED_BODY);
+#ifdef _MGSCHEMA_COMPOSITING
+    WndClass.dwBkColor   = GetWindowElementAttr (HWND_NULL,
+            WE_MAINC_THREED_BODY);
+#else
+    WndClass.iBkColor    = GetWindowElementPixelEx (HWND_NULL,
+            HDC_SCREEN, WE_MAINC_THREED_BODY);
+#endif
     WndClass.WinProc     = TrackBarCtrlProc;
-    return AddNewControlClass (&WndClass) == ERR_OK;
+    return gui_AddNewControlClass (&WndClass) == ERR_OK;
 }
 #endif /* _MGCTRL_TRACKBAR */
 

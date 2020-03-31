@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** drawtext.h: The common text drawing routines.
@@ -119,7 +119,7 @@ int _gdi_get_text_extent (PDC pdc, const unsigned char* text, int len,
 int _gdi_get_drawtext_extent (PDC pdc, const unsigned char* text, int len,
                 void* content, SIZE* size);
 
-BOOL InitTextBitmapBuffer (void);
+BOOL gdi_InitTextBitmapBuffer (void);
 void TermTextBitmapBuffer (void);
 
 typedef struct _DRAWTEXTEX2_CTXT

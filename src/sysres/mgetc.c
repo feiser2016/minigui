@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*************************************************
 * This is inside mode of system res configuation *
@@ -496,7 +496,7 @@ static char* _flat_values[]={
     "1",
     "16",
 //window element colors
-    "0xFFFFFFFFF",
+    "0xFFFFFFFF",
     "0xFF000000",
     "0xFF000000",
     "0xFF000000",

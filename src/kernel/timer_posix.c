@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /* timer_posix.c */
 
@@ -61,7 +61,7 @@ static void timer_handler (int sig, siginfo_t *extra, void *cruft)
     }
 #endif
 
-    __mg_timer_counter++;
+    __mg_tick_counter++;
 
     // alert desktop
     AlertDesktopTimerEvent ();
@@ -117,7 +117,7 @@ BOOL mg_InitTimer (void)
         return FALSE;
     }
 
-    __mg_timer_counter = 0;
+    __mg_tick_counter = 0;
 
     return TRUE;
 }

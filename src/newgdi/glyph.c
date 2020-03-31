@@ -41,7 +41,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 /*
 ** glyph.c: Low level glyph routines.
@@ -284,7 +284,7 @@ static int  _line_bk_size = 0;
 static BYTE* _scaled_bits = NULL;
 static size_t _scaled_bits_size = 0;
 
-BOOL InitTextBitmapBuffer (void)
+BOOL gdi_InitTextBitmapBuffer (void)
 {
     return TRUE;
 }
@@ -2574,7 +2574,7 @@ static void draw_back_area (PDC pdc, POINT* area, GAL_Rect* gal_rc,
         break;
 
     default:
-        _WRN_PRINTF ("No way to draw background");
+        _WRN_PRINTF ("No way to draw background\n");
         break;
     }
 }
@@ -2662,9 +2662,7 @@ int _gdi_draw_null_glyph (PDC pdc, int advance, BOOL direction,
         return advance;
     }
 
-#ifndef _MGRM_THREADS
-    if (CHECK_DRAWING (pdc)) goto end;
-#endif
+    if (WITHOUT_DRAWING (pdc)) goto end;
 
     pdc->cur_pixel = pdc->bkcolor;
     pdc->cur_ban = NULL;
@@ -2884,9 +2882,7 @@ int _gdi_draw_one_glyph (PDC pdc, Glyph32 glyph_value, BOOL direction,
         goto end;
     }
 
-#ifndef _MGRM_THREADS
-    if (CHECK_DRAWING (pdc)) goto end;
-#endif
+    if (WITHOUT_DRAWING (pdc)) goto end;
 
     ENTER_DRAWING (pdc);
 

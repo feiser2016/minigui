@@ -40,7 +40,7 @@
  *   under the terms and conditions of the commercial license.
  *
  *   For more information about the commercial license, please refer to
- *   <http://www.minigui.com/en/about/licensing-policy/>.
+ *   <http://www.minigui.com/blog/minigui-licensing-policy/>.
  */
 
 /*
@@ -68,6 +68,51 @@
 
 #include "common.h"
 #include "minigui.h"
+
+#ifdef _MGSLICE_FALLBACK
+
+#include <stdlib.h>
+
+void *mg_slice_alloc(size_t block_size)
+{
+    return malloc (block_size);
+}
+
+void *mg_slice_alloc0(size_t block_size)
+{
+    return calloc (1, block_size);
+}
+
+void *mg_slice_copy(size_t block_size, const void *mem_block)
+{
+    void* new_slice = malloc (block_size);
+    memcpy (new_slice, mem_block, block_size);
+    return new_slice;
+}
+
+void mg_slice_free(size_t block_size, void *mem_block)
+{
+    free (mem_block);
+}
+
+void mg_slice_free_chain_with_offset(size_t block_size,
+        void *mem_chain, size_t next_offset)
+{
+    void* slice = mem_chain;
+
+    while (slice) {
+        Uint8 *current = slice;
+        slice = *(void **) (current + next_offset);
+        free (current);
+    }
+}
+
+void mg_slice_debug_tree_statistics(void)
+{
+    _MG_PRINTF("MGSlice: we are using the fallback implementation\n");
+}
+
+#else /* define _MGSLICE_FALLBACK */
 
 #if defined(HAVE_POSIX_MEMALIGN) && !defined(_XOPEN_SOURCE)
 #define _XOPEN_SOURCE 600       /* posix_memalign() */
@@ -795,7 +840,7 @@ void *mg_slice_alloc (size_t mem_size)
     if (MG_UNLIKELY (allocator->config.debug_blocks))
         smc_notify_alloc (mem, mem_size);
 
-    _DBG_PRINTF("%s: slice allocated: %p (%lu)\n",
+    _DBG_PRINTF("%s: slice allocated: %p (%zu)\n",
             __FUNCTION__, (void*)mem, mem_size);
 
     return mem;
@@ -855,7 +900,7 @@ void mg_slice_free (size_t mem_size, void *mem_block)
         free (mem_block);
     }
 
-    _DBG_PRINTF("%s: slice freed: %p (%lu)\n",
+    _DBG_PRINTF("%s: slice freed: %p (%zu)\n",
             __FUNCTION__, (void*)mem_block, mem_size);
 }
 
@@ -1236,19 +1281,19 @@ static int smc_notify_free (void *pointer, size_t size)
     found_one = smc_tree_lookup (address, &real_size);
 
     if (!found_one) {
-        _ERR_PRINTF("MGSlice: MemChecker: attempt to release non-allocated block: %p size=%lu\n",
+        _ERR_PRINTF("MGSlice: MemChecker: attempt to release non-allocated block: %p size=%zu\n",
                 pointer, size);
         return 0;
     }
 
     if (real_size != size && (real_size || size)) {
-        _ERR_PRINTF("MGSlice: MemChecker: attempt to release block with invalid size: %p size=%lu invalid-size=%lu\n",
+        _ERR_PRINTF("MGSlice: MemChecker: attempt to release block with invalid size: %p size=%zu invalid-size=%zu\n",
                 pointer, real_size, size);
         return 0;
     }
 
     if (!smc_tree_remove (address)) {
-        _ERR_PRINTF("MGSlice: MemChecker: attempt to release non-allocated block: %p size=%lu\n",
+        _ERR_PRINTF("MGSlice: MemChecker: attempt to release non-allocated block: %p size=%zu\n",
                 pointer, size);
         return 0;
     }
@@ -1455,3 +1500,5 @@ void mg_slice_debug_tree_statistics (void)
 }
 
 #endif /* _MGDEVEL_MODE */
+
+#endif /* not defined _MGSLICE_FALLBACK */
